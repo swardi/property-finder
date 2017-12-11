@@ -1,0 +1,69 @@
+<div class="content">
+    <div class="container">
+        <div id="propertyFinderSearchbox" class="col-md-5">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <div class="panel-title">Trip Sorter</div>
+                </div>
+                <div class="panel-body">
+                    <div *ngIf="error" class="alert alert-danger col-sm-12">
+                        {{error}}
+                    </div>
+                    <form [formGroup]="propertyFinderForm" id="propertyFinderForm" class="myForm">
+                        <div class="form-group">
+                            <label for="from" class="control-label">From</label>
+                            <select class="form-control" formControlName="from" [(ngModel)]="searchForm.from">
+                                <option>Select</option>
+                                <option *ngFor="let departure of departureNames">
+                                    {{departure}}
+                                </option>
+                            </select>
+                            <span [hidden]="!propertyFinderForm.controls.from.hasError('required') || !propertyFinderForm.controls.from.touched">Please select from location</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="to" class="control-label">To</label>
+                            <select class="form-control" formControlName="to" [(ngModel)]="searchForm.to">
+                                <option>Select</option>
+                                <option *ngFor="let arrival of arrivalNames">
+                                    {{arrival}}
+                                </option>
+                            </select>
+                            <span *ngIf="propertyFinderForm.controls.to.hasError('required') && propertyFinderForm.controls.to.touched">Arrival is required</span>
+                        </div>
+                        <div class="btn-group btn-group-sm" data-toggle="buttons">
+                            <label class="btn btn-primary">
+                                <input type="radio" name="selection" [value]="'Fastest'" (click)="setSelection('fastest')"> Fastest
+                            </label>
+                            <label  class="btn btn-primary">
+
+                                <input type="radio" name="selection" [value]="'Cheapest'" (click)="setSelection('cheapest')"> Cheapest
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <div class="controls">
+                                <button id="btn-login" class="btn dark-grey btn-cursor" [disabled]="propertyFinderForm.status==='INVALID'" (click)="search()">Search</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5" [hidden]="selectedPath.length<=0">
+            Trip Sorter -- Total = {{selectedPath[selectedPath.length-1].totalCost}}
+            <table class="table table-striped">
+                <thead>
+                    <tr *ngFor="let path of selectedPath">
+                        <td> {{path.departure}} > {{path.arrival}}
+                            <div> {{path.transport}} {{path.reference}} in {{path.duration.h}}:{{path.duration.m}} </div>
+                        </td>
+                        <td>
+                            {{currencySymbol}} {{path.discountedCost}}
+                        </td>
+                    </tr>
+                </thead>
+            </table>
+            <div class="controls">
+                <button id="btn-login" class="btn dark-grey btn-cursor" (click)="resetForm()">Reset</button>
+            </div>
+        </div>
+    </div>
