@@ -160,9 +160,9 @@ export class AppComponent {
           neighbor.discountedCost =  neighbor.cost - Math.ceil(neighbor.cost*neighbor.discount/100);
       	}else{
     			alt = distances[smallest] + ( parseInt(neighbor.duration.h)*60 + parseInt(neighbor.duration.h) );	      		
+          neighbor.discountedCost =  neighbor.cost - Math.ceil(neighbor.cost*neighbor.discount/100);
       	}
         
-
         if(alt < distances[neighbor.arrival]) {
           distances[neighbor.arrival] = alt;
           previous[neighbor.arrival] = neighbor;
