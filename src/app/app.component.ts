@@ -1,78 +1,39 @@
 import { Component } from '@angular/core';
 import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms';
-
+import {Duration, Deal, PriorityQueue} from './model';
 import {SearchService} from "./search.service";
-
-export interface Duration{
-	h:string;
-	m:string;
-}
-
-export interface Deal {
-	arrival : string;
-	cost:number;
-	departure:string;
-	discount:string;
-	duration:Duration;
-	reference:string;
-	transport:string;
-
-}
-
-export class PriorityQueue {
-  private _nodes = [];
-
-  enqueue (priority :any, key: any) {
-    this._nodes.push({key: key, priority: priority });
-    this.sort();
-  };
-  
-  dequeue  () {
-    return this._nodes.shift().key;
-  };
-  
-  sort  () {
-    this._nodes.sort(function (a, b) {
-      return a.priority - b.priority;
-    });
-  };
-  
-  isEmpty () {
-    return !this._nodes.length;
-  };
-}
-
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
+
 export class AppComponent {
     propertyFinderForm : FormGroup;
-    searchForm = { from: '', to: '' };
-    loginPromise: Promise<any>;
-    departures : any[] = [];
-    arrivals : any[]=[];
-    departureNames : any[]=[];
-    arrivalNames : any[] = [];
+    searchForm = { from: '', to: '' }; 
+    departures : any[] = []; 
+    departureNames : any[]=[]; 
     selectedPath : any[] = [];
     currencySymbol : string = "$";
     criteria : string = "Cheapest"
+
     constructor(private searchService: SearchService, private fb: FormBuilder) {
         
     }
 
-    ngOnInit() {
-		    	
+  // Initialize the form and load data.
+  ngOnInit() {
     	this.resetForm();	
-        this.loadData();
+      this.loadData();
 	}
 
+  // Cheapest or fastest
 	setSelection(selection){
 		this.criteria = selection;
 	}
-	resetForm (){
+	
+  resetForm (){
 		this.selectedPath = [];
 		this.searchForm = { from: '', to: '' };
 		this.propertyFinderForm = new FormGroup({
@@ -84,7 +45,9 @@ export class AppComponent {
         });
 
 	}
-	loadData () {
+	
+  //Load JSON data.
+  loadData () {
 		this.searchService.search().then(response => {
 			this.currencySymbol = response.json().currency;
         	this.transformData(response.json().deals)
@@ -92,35 +55,34 @@ export class AppComponent {
         }, error => {});
 	}
 
+  // Transform data into a Graph structure
 	transformData(deals: any[]) {
 		deals.forEach(deal => {
             if(!this.departures[deal.departure]){
 				this.departures[deal.departure] = [];
 			}
 			this.departures[deal.departure].push(deal);
+   })
 
-			if(!this.arrivals[deal.arrival]){
-				this.arrivals[deal.arrival] = [];
-			}
-			this.arrivals[deal.arrival].push(deal);
-        })
-        console.log(this.departures);
 		this.departureNames = Object.keys(this.departures);        
-		this.arrivalNames = Object.keys(this.arrivals);
 	}
 
+
 	search (){
+    // If both to and from are the same prompt the user
 		if(this.searchForm.from === this.searchForm.to){
 			alert("Please select a location different from departure");
 			return;
 		}
+
 		let nodes = new PriorityQueue();
 		let INFINITY = 1/0;
-        let distances = {};
-        let previous = {};
-        var smallest, vertex, neighbor, alt;
+    let distances = {};
+    let previous = {};
+    var smallest, vertex, neighbor, alt;
 
-      //Initialize distance array, will contain infinity for all values and 0 for start
+    
+    //Initialize previous and distance array, will contain infinity for all values and 0 for start
     this.departureNames.forEach(vertex => {
       if(vertex === this.searchForm.from) {
         distances[vertex] = 0;
@@ -139,6 +101,7 @@ export class AppComponent {
     while(!nodes.isEmpty()) {
       smallest = nodes.dequeue();
 
+      //If this is the last node, you are done, copy the path to path array.
       if(smallest === this.searchForm.to) {
         this.selectedPath = [];
 
@@ -146,6 +109,7 @@ export class AppComponent {
           this.selectedPath.push(previous[smallest]);
           smallest = previous[smallest].departure;
         }
+        //Reverse the array to start from the starting point
         this.selectedPath = this.selectedPath.reverse();
         break;
       }
@@ -156,8 +120,8 @@ export class AppComponent {
 
       this.departures[smallest].forEach( neighbor => {
       	if(this.criteria === "cheapest"){
-      		alt = distances[smallest] + ( neighbor.cost - Math.ceil(neighbor.cost*neighbor.discount/100) );	
-          neighbor.discountedCost =  neighbor.cost - Math.ceil(neighbor.cost*neighbor.discount/100);
+      		alt = distances[smallest] + ( neighbor.cost - Math.ceil(neighbor.cost*neighbor.discount/100) );  	
+          neighbor.discountedCost =  neighbor.cost - Math.ceil(neighbor.cost*neighbor.discount/100); // Calculate on the base of discount to display on UI
       	}else{
     			alt = distances[smallest] + ( parseInt(neighbor.duration.h)*60 + parseInt(neighbor.duration.h) );	      		
           neighbor.discountedCost =  neighbor.cost - Math.ceil(neighbor.cost*neighbor.discount/100);
@@ -166,7 +130,7 @@ export class AppComponent {
         if(alt < distances[neighbor.arrival]) {
           distances[neighbor.arrival] = alt;
           previous[neighbor.arrival] = neighbor;
-          neighbor.totalCost=alt;
+          neighbor.totalCost=alt;  // Keep a track of total cost for each path. This will be used on the UI too to display total cost
           nodes.enqueue(alt, neighbor.arrival);
         }
       });

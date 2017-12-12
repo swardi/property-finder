@@ -24,7 +24,7 @@
                             <label for="to" class="control-label">To</label>
                             <select class="form-control" formControlName="to" [(ngModel)]="searchForm.to">
                                 <option>Select</option>
-                                <option *ngFor="let arrival of arrivalNames">
+                                <option *ngFor="let arrival of departureNames">
                                     {{arrival}}
                                 </option>
                             </select>
